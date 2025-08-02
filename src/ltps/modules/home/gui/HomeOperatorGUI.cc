@@ -33,8 +33,8 @@ void HomeOperatorGUI::sendChoosePlayerGUI(Player& player, ChoosePlayerCallback c
 
     auto localeCode = player.getLocaleCode();
 
-    SimpleForm fm{"Teleport System - Home Manager"_trl(localeCode)};
-    fm.setContent("请选择一个玩家: "_trl(localeCode));
+    SimpleForm fm{"Hệ thống dịch chuyển - Quản lý nhà"_trl(localeCode)};
+    fm.setContent("Vui lòng chọn một người chơi: "_trl(localeCode));
 
     auto const& map = storage->getAllHomes();
     for (auto const& pair : map) {
@@ -55,10 +55,10 @@ void HomeOperatorGUI::sendChooseHomeGUI(Player& player, RealName targetPlayer, C
     auto& homes = storage->getHomes(targetPlayer);
 
     auto fm = BackSimpleForm::make<sendMainGUI>();
-    fm.setTitle("Teleport System - Home Manager"_trl(localeCode));
-    fm.setContent("{} 共有 {} 个传送点, 请选择一个: "_trl(localeCode, targetPlayer, homes.size()));
+    fm.setTitle("Hệ thống dịch chuyển - Quản lý nhà"_trl(localeCode));
+    fm.setContent("{} có tổng cộng {} nhà, vui lòng chọn một nhà: "_trl(localeCode, targetPlayer, homes.size()));
 
-    fm.appendButton("创建"_trl(localeCode), "textures/ui/color_plus", "path", [targetPlayer](Player& self) {
+    fm.appendButton("Tạo mới"_trl(localeCode), "textures/ui/color_plus", "path", [targetPlayer](Player& self) {
         sendCreateOrEditHomeGUI(self, targetPlayer);
     });
 
@@ -76,8 +76,8 @@ void HomeOperatorGUI::sendOperatorMenu(Player& player, RealName targetPlayer, Ho
     auto localeCode = player.getLocaleCode();
 
     BackSimpleForm::make<sendChooseHomeGUI>(targetPlayer, sendOperatorMenu)
-        .setTitle("Teleport System - Home Manager"_trl(localeCode))
-        .setContent("所属玩家: {}\n家园名称: {}\n家园坐标: {}\n创建时间: {}\n修改时间: {}"_trl(
+        .setTitle("Hệ thống dịch chuyển - Quản lý nhà"_trl(localeCode))
+        .setContent("Chủ sở hữu: {}\nTên nhà: {}\nTọa độ: {}\nTạo lúc: {}\nSửa lúc: {}"_trl(
             localeCode,
             targetPlayer,
             home.name,
@@ -86,7 +86,7 @@ void HomeOperatorGUI::sendOperatorMenu(Player& player, RealName targetPlayer, Ho
             home.modifiedTime
         ))
         .appendButton(
-            "前往"_trl(localeCode),
+            "Dịch chuyển đến"_trl(localeCode),
             "textures/ui/send_icon",
             "path",
             [targetPlayer, home](Player& self) {
@@ -94,13 +94,13 @@ void HomeOperatorGUI::sendOperatorMenu(Player& player, RealName targetPlayer, Ho
             }
         )
         .appendButton(
-            "编辑"_trl(localeCode),
+            "Chỉnh sửa"_trl(localeCode),
             "textures/ui/book_edit_default",
             "path",
             [targetPlayer, home](Player& self) { sendCreateOrEditHomeGUI(self, targetPlayer, home); }
         )
         .appendButton(
-            "删除"_trl(localeCode),
+            "Xóa"_trl(localeCode),
             "textures/ui/trash_default",
             "path",
             [targetPlayer, home](Player& self) {
@@ -117,14 +117,14 @@ void HomeOperatorGUI::sendCreateOrEditHomeGUI(
 ) {
     auto localeCode = player.getLocaleCode();
 
-    CustomForm fm{"Home Manager - Create Home"_trl(localeCode)};
-    fm.appendInput("name", "请输入家园名称: "_trl(localeCode), "string", home ? home->name : "");
+    CustomForm fm{"Quản lý nhà - Tạo nhà"_trl(localeCode)};
+    fm.appendInput("name", "Vui lòng nhập tên nhà: "_trl(localeCode), "string", home ? home->name : "");
     fm.appendInput(
         "pos",
-        "请输入家园坐标: "_trl(localeCode),
+        "Vui lòng nhập tọa độ nhà: "_trl(localeCode),
         "string",
         (home ? "{},{},{}"_tr(home->x, home->y, home->z) : ""),
-        "使用半角逗号分隔坐标, 例如: x,y,z"_tr(localeCode)
+        "Sử dụng dấu phẩy để phân tách, ví dụ: x,y,z"_tr(localeCode)
     );
 
     auto&                           dimMap = VanillaDimensions::DimensionMap();
@@ -149,7 +149,7 @@ void HomeOperatorGUI::sendCreateOrEditHomeGUI(
         }
     }
 
-    fm.appendDropdown("dimName", "请选择一个维度: "_trl(localeCode), dimNames, index);
+    fm.appendDropdown("dimName", "Vui lòng chọn một thế giới: "_trl(localeCode), dimNames, index);
 
     fm.sendTo(
         player,
@@ -168,7 +168,7 @@ void HomeOperatorGUI::sendCreateOrEditHomeGUI(
                 auto& dimMap  = VanillaDimensions::DimensionMap();
                 auto  dimIter = dimMap.mRight.find(dimName);
                 if (dimIter == dimMap.mRight.end()) {
-                    mc_utils::sendText<mc_utils::Error>(self, "无效的维度名称"_trl(localeCode));
+                    mc_utils::sendText<mc_utils::Error>(self, "Tên thế giới không hợp lệ"_trl(localeCode));
                     return;
                 }
                 dimid = dimIter->second;
@@ -185,7 +185,7 @@ void HomeOperatorGUI::sendCreateOrEditHomeGUI(
                     parts.push_back(part);
                 }
                 if (parts.size() != 3) {
-                    mc_utils::sendText<mc_utils::Error>(self, "坐标格式错误"_trl(localeCode));
+                    mc_utils::sendText<mc_utils::Error>(self, "Định dạng tọa độ không hợp lệ"_trl(localeCode));
                     return;
                 } else {
                     try {
@@ -193,7 +193,7 @@ void HomeOperatorGUI::sendCreateOrEditHomeGUI(
                         v3.y = std::stof(parts[1]);
                         v3.z = std::stof(parts[2]);
                     } catch (...) {
-                        mc_utils::sendText<mc_utils::Error>(self, "捕获到异常，请检查坐标"_trl(localeCode));
+                        mc_utils::sendText<mc_utils::Error>(self, "Có lỗi khi xử lý tọa độ, vui lòng kiểm tra lại"_trl(localeCode));
                         return;
                     }
                 }

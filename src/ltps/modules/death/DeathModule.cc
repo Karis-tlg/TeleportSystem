@@ -30,6 +30,7 @@ bool DeathModule::init() { return true; }
 bool DeathModule::enable() {
     auto& bus = ll::event::EventBus::getInstance();
 
+    // Khi người chơi yêu cầu quay lại điểm chết
     mListeners.emplace_back(bus.emplaceListener<PlayerRequestBackDeathPointEvent>(
         [this](PlayerRequestBackDeathPointEvent& ev) {
             auto&      player     = ev.getPlayer();
@@ -39,7 +40,7 @@ bool DeathModule::enable() {
 
             auto info = getStorage()->getSpecificDeathInfo(realName, index);
             if (!info.has_value()) {
-                mc_utils::sendText<mc_utils::Error>(player, "没有找到对应的死亡信息"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(player, "Không tìm thấy thông tin điểm chết tương ứng"_trl(localeCode));
                 ev.cancel();
                 return;
             }
@@ -54,13 +55,15 @@ bool DeathModule::enable() {
             }
 
             info->teleport(player);
-            mc_utils::sendText(player, "传送成功"_trl(localeCode));
+            mc_utils::sendText(player, "Dịch chuyển thành công"_trl(localeCode));
 
             auto backed = BackedDeathPointEvent{player, *info, index};
             bus.publish(backed);
         },
         ll::event::EventPriority::High
     ));
+
+    // Khi chuẩn bị dịch chuyển về điểm chết
     mListeners.emplace_back(bus.emplaceListener<BackingDeathPointEvent>(
         [this](BackingDeathPointEvent& ev) {
             auto& player     = ev.getPlayer();
@@ -76,9 +79,9 @@ bool DeathModule::enable() {
             auto price = cl.eval();
 
             if (!price) {
-                mc_utils::sendText<mc_utils::Error>(player, "计算价格失败"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(player, "Tính toán giá thất bại"_trl(localeCode));
                 TeleportSystem::getInstance().getSelf().getLogger().error(
-                    "[DeathModule]: Calculate price failed! player: {}, deathInfo: {}, error: {}",
+                    "[DeathModule]: Tính giá thất bại! Người chơi: {}, Thông tin chết: {}, lỗi: {}",
                     realName,
                     info.toString(),
                     price.error()
@@ -97,7 +100,7 @@ bool DeathModule::enable() {
         ll::event::EventPriority::High
     ));
 
-
+    // Khi người chơi chết
     mListeners.emplace_back(bus.emplaceListener<ll::event::PlayerDieEvent>([this](ll::event::PlayerDieEvent& ev) {
         auto& player = ev.self();
         if (player.isSimulatedPlayer()) {
@@ -114,11 +117,11 @@ bool DeathModule::enable() {
         auto info = DeathStorage::DeathInfo::make(pos, dimid);
         getStorage()->addDeathInfo(player.getRealName(), std::move(info));
 
-        mc_utils::sendText(player, "本次死亡信息已记录，使用 /death back 可以返回死亡点"_trl(player.getLocaleCode()));
+        mc_utils::sendText(player, "Thông tin lần chết này đã được lưu, dùng lệnh /death back để quay lại điểm chết"_trl(player.getLocaleCode()));
     }));
 
-    mListeners.emplace_back(bus.emplaceListener<ll::event::PlayerRespawnEvent>([this](ll::event::PlayerRespawnEvent& ev
-                                                                               ) {
+    // Khi người chơi hồi sinh
+    mListeners.emplace_back(bus.emplaceListener<ll::event::PlayerRespawnEvent>([this](ll::event::PlayerRespawnEvent& ev) {
         auto& player = ev.self();
         if (player.isSimulatedPlayer()) {
             return;
@@ -129,7 +132,6 @@ bool DeathModule::enable() {
             DeathGUI::sendBackGUI(player);
         }
     }));
-
 
     DeathCommand::setup();
 

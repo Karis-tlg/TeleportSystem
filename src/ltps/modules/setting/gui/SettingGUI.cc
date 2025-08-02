@@ -15,14 +15,14 @@ void SettingGUI::sendMainGUI(Player& player) {
         player.getRealName()
     );
     if (!setting) {
-        mc_utils::sendText<mc_utils::Error>(player, "发生错误，请稍后再试"_trl(localeCode));
+        mc_utils::sendText<mc_utils::Error>(player, "Đã xảy ra lỗi, vui lòng thử lại sau"_trl(localeCode));
         return;
     }
 
-    ll::form::CustomForm fm{"Setting - 个人设置"_trl(localeCode)};
-    fm.appendToggle("allowTpa", "允许对我发起 TPA 请求"_tr(), setting->allowTpa);
-    fm.appendToggle("deathPopup", "死亡后弹出返回死亡点弹窗"_tr(), setting->deathPopup);
-    fm.appendToggle("tpaPopup", "TPA 请求时弹出对话框"_tr(), setting->tpaPopup);
+    ll::form::CustomForm fm{"Cài đặt - Thiết lập cá nhân"_trl(localeCode)};
+    fm.appendToggle("allowTpa", "Cho phép người khác gửi yêu cầu TPA đến tôi"_tr(), setting->allowTpa);
+    fm.appendToggle("deathPopup", "Hiển thị cửa sổ quay lại điểm chết sau khi chết"_tr(), setting->deathPopup);
+    fm.appendToggle("tpaPopup", "Hiển thị hộp thoại khi nhận yêu cầu TPA"_tr(), setting->tpaPopup);
 
     fm.sendTo(player, [](Player& self, ll::form::CustomFormResult const& res, auto) {
         if (!res) return;
@@ -40,18 +40,17 @@ void SettingGUI::sendMainGUI(Player& player) {
         );
 
         if (!resp.has_value()) {
-            mc_utils::sendText<mc_utils::Error>(self, "发生错误，请稍后再试"_trl(localeCode));
+            mc_utils::sendText<mc_utils::Error>(self, "Đã xảy ra lỗi, vui lòng thử lại sau"_trl(localeCode));
             TeleportSystem::getInstance().getSelf().getLogger().error(
-                "Failed to set setting data for player: {}, error: {}",
+                "Không thể lưu cài đặt cho người chơi: {}, lỗi: {}",
                 realName,
                 resp.error()
             );
             return;
         }
 
-        mc_utils::sendText(self, "设置已保存"_trl(localeCode));
+        mc_utils::sendText(self, "Cài đặt đã được lưu"_trl(localeCode));
     });
 }
-
 
 } // namespace ltps::setting

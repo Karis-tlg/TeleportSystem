@@ -20,20 +20,20 @@ struct BackParam {
 void DeathCommand::setup() {
     auto& cmd = ll::command::CommandRegistrar::getInstance().getOrCreateCommand("death", "TeleportSystem - Death");
 
-    // death
+    // /death
     cmd.overload().execute([](CommandOrigin const& origin, CommandOutput& output) {
         if (origin.getOriginType() != CommandOriginType::Player) {
-            mc_utils::sendText<mc_utils::Error>(output, "此命令只能由玩家执行"_tr());
+            mc_utils::sendText<mc_utils::Error>(output, "Lệnh này chỉ có thể được thực hiện bởi người chơi"_tr());
             return;
         }
         auto& player = *static_cast<Player*>(origin.getEntity());
         DeathGUI::sendMainMenu(player);
     });
 
-    // death list
+    // /death list
     cmd.overload().text("list").execute([](CommandOrigin const& origin, CommandOutput& output) {
         if (origin.getOriginType() != CommandOriginType::Player) {
-            mc_utils::sendText<mc_utils::Error>(output, "此命令只能由玩家执行"_tr());
+            mc_utils::sendText<mc_utils::Error>(output, "Lệnh này chỉ có thể được thực hiện bởi người chơi"_tr());
             return;
         }
         auto& player     = *static_cast<Player*>(origin.getEntity());
@@ -43,11 +43,11 @@ void DeathCommand::setup() {
         auto deaths =
             TeleportSystem::getInstance().getStorageManager().getStorage<DeathStorage>()->getDeathInfos(realName);
         if (!deaths || deaths->empty()) {
-            mc_utils::sendText<mc_utils::Error>(output, "您还没有任何死亡信息"_trl(localeCode));
+            mc_utils::sendText<mc_utils::Error>(output, "Bạn chưa có thông tin về lần chết nào"_trl(localeCode));
             return;
         }
 
-        mc_utils::sendText(output, "您最近的死亡信息："_trl(localeCode));
+        mc_utils::sendText(output, "Thông tin lần chết gần nhất của bạn:"_trl(localeCode));
         mc_utils::sendText(output, " * {}"_tr((*deaths)[0].toString()));
 
         bool skipFirst = false;
@@ -58,14 +58,14 @@ void DeathCommand::setup() {
             }
             mc_utils::sendText(output, "   {}"_tr(death.toString()));
         }
-        mc_utils::sendText(output, "共计 {} 条死亡记录"_trl(localeCode, deaths->size()));
+        mc_utils::sendText(output, "Tổng cộng có {} bản ghi tử vong"_trl(localeCode, deaths->size()));
     });
 
-    // death back [index]
+    // /death back [index]
     cmd.overload<BackParam>().text("back").optional("index").execute(
         [](CommandOrigin const& origin, CommandOutput& output, BackParam const& param) {
             if (origin.getOriginType() != CommandOriginType::Player) {
-                mc_utils::sendText<mc_utils::Error>(output, "此命令只能由玩家执行"_tr());
+                mc_utils::sendText<mc_utils::Error>(output, "Lệnh này chỉ có thể được thực hiện bởi người chơi"_tr());
                 return;
             }
             auto& player = *static_cast<Player*>(origin.getEntity());
@@ -73,14 +73,14 @@ void DeathCommand::setup() {
         }
     );
 
-    // back (别名)
+    // /back (bí danh)
     if (getConfig().modules.death.registerBackCommand) {
         ll::command::CommandRegistrar::getInstance()
             .getOrCreateCommand("back", "TeleportSystem - Death")
             .overload()
             .execute([](CommandOrigin const& origin, CommandOutput& output) {
                 if (origin.getOriginType() != CommandOriginType::Player) {
-                    mc_utils::sendText<mc_utils::Error>(output, "此命令只能由玩家执行"_tr());
+                    mc_utils::sendText<mc_utils::Error>(output, "Lệnh này chỉ có thể được thực hiện bởi người chơi"_tr());
                     return;
                 }
                 auto& player = *static_cast<Player*>(origin.getEntity());

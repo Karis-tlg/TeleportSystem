@@ -139,22 +139,22 @@ void TpaRequest::sendFormToReceiver() {
     auto  receiverLocaleCode = receiver->getLocaleCode();
 
     if (!receiverSettings.tpaPopup) {
-        return; // 玩家不接受 tpa 弹窗
+        return; // Người chơi không chấp nhận popup TPA
     }
 
     ll::form::SimpleForm form;
-    form.setTitle("Tpa Request"_trl(receiverLocaleCode));
+    form.setTitle("Yêu cầu TPA"_trl(receiverLocaleCode));
 
     std::string desc = mType == Type::To
-                         ? "'{0}' 希望传送到您当前位置"_trl(receiverLocaleCode, sender->getRealName())
-                         : "'{0}' 希望将您传送到他(她)那里"_trl(receiverLocaleCode, sender->getRealName());
+                         ? "'{0}' muốn dịch chuyển đến vị trí của bạn"_trl(receiverLocaleCode, sender->getRealName())
+                         : "'{0}' muốn dịch chuyển bạn đến vị trí của họ"_trl(receiverLocaleCode, sender->getRealName());
     form.setContent(desc);
-    form.appendButton("接受"_trl(receiverLocaleCode), "textures/ui/realms_green_check", "path", [this](Player&) {
+    form.appendButton("Chấp nhận"_trl(receiverLocaleCode), "textures/ui/realms_green_check", "path", [this](Player&) {
         accept();
     });
-    form.appendButton("拒绝"_trl(receiverLocaleCode), "textures/ui/realms_red_x", "path", [this](Player&) { deny(); });
+    form.appendButton("Từ chối"_trl(receiverLocaleCode), "textures/ui/realms_red_x", "path", [this](Player&) { deny(); });
     form.appendButton(
-        "忽略\n失效时间: {0}"_trl(receiverLocaleCode, getExpirationTime()),
+        "Bỏ qua\nHết hạn sau: {0}"_trl(receiverLocaleCode, getExpirationTime()),
         "textures/ui/backup_replace",
         "path"
     );
@@ -166,20 +166,21 @@ void TpaRequest::sendFormToReceiver() {
 std::string TpaRequest::getStateDescription(State state, std::string const& localeCode) {
     switch (state) {
     case State::Available:
-        return "请求有效"_trl(localeCode);
+        return "Yêu cầu còn hiệu lực"_trl(localeCode);
     case State::Accepted:
-        return "请求已接受"_trl(localeCode);
+        return "Yêu cầu đã được chấp nhận"_trl(localeCode);
     case State::Denied:
-        return "请求已拒绝"_trl(localeCode);
+        return "Yêu cầu đã bị từ chối"_trl(localeCode);
     case State::Expired:
-        return "请求已过期"_trl(localeCode);
+        return "Yêu cầu đã hết hạn"_trl(localeCode);
     case State::SenderOffline:
-        return "发起者离线"_trl(localeCode);
+        return "Người gửi đã thoát"_trl(localeCode);
     case State::ReceiverOffline:
-        return "接收者离线"_trl(localeCode);
+        return "Người nhận đã thoát"_trl(localeCode);
     }
-    return "未知状态"_trl(localeCode);
+    return "Trạng thái không xác định"_trl(localeCode);
 }
+
 std::string TpaRequest::getTypeString(Type type) {
     switch (type) {
     case Type::To:

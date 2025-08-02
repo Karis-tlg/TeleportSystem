@@ -19,13 +19,13 @@ void DeathGUI::sendMainMenu(Player& player, BackCB backCb) {
         );
 
     if (!infos || infos->empty()) {
-        mc_utils::sendText(player, "您还没有任何死亡信息"_trl(localeCode));
+        mc_utils::sendText(player, "Bạn chưa có thông tin về lần chết nào"_trl(localeCode));
         return;
     }
 
     auto fm = BackSimpleForm{std::move(backCb)};
-    fm.setTitle("Death - 死亡信息列表"_trl(localeCode));
-    fm.setContent("您有 {0} 条死亡信息"_trl(localeCode, infos->size()));
+    fm.setTitle("Death - Danh sách vị trí chết"_trl(localeCode));
+    fm.setContent("Bạn có {0} bản ghi vị trí chết"_trl(localeCode, infos->size()));
 
     int index = 0;
     for (auto& info : *infos) {
@@ -47,18 +47,18 @@ void DeathGUI::sendBackGUI(Player& player, int index, BackCB backCb) {
         index
     );
     if (!info) {
-        mc_utils::sendText(player, "您还没有任何死亡信息"_trl(localeCode));
+        mc_utils::sendText(player, "Bạn chưa có thông tin về lần chết nào"_trl(localeCode));
         return;
     }
 
     BackSimpleForm{std::move(backCb)}
-        .setTitle("Death - 死亡信息"_trl(localeCode))
-        .setContent("死亡时间: {0}\n死亡坐标: {1}"_trl(localeCode, info->time, info->toPosString()))
+        .setTitle("Death - Thông tin vị trí chết"_trl(localeCode))
+        .setContent("Thời gian chết: {0}\nTọa độ chết: {1}"_trl(localeCode, info->time, info->toPosString()))
         .appendButton(
-            "前往死亡点"_trl(localeCode),
+            "Dịch chuyển đến điểm chết"_trl(localeCode),
             [](Player& self) { ll::event::EventBus::getInstance().publish(PlayerRequestBackDeathPointEvent{self}); }
         )
-        .appendButton("取消"_trl(localeCode))
+        .appendButton("Hủy"_trl(localeCode))
         .sendTo(player);
 }
 

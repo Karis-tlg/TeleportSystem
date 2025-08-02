@@ -19,9 +19,9 @@ void TpaGUI::sendMainMenu(Player& player) {
 void TpaGUI::sendChooseTpaTypeMenu(Player& player, ChooseTpaTypeCallback callback) {
     auto const localeCode = player.getLocaleCode();
 
-    ll::form::SimpleForm{"Tpa 菜单"_trl(localeCode), "你想如何传送？"_trl(localeCode)}
-        .appendButton("传送到其他玩家"_trl(localeCode))
-        .appendButton("让其他玩家传送过来"_trl(localeCode))
+    ll::form::SimpleForm{"Menu TPA"_trl(localeCode), "Chọn chế độ TPA?"_trl(localeCode)}
+        .appendButton("TPA"_trl(localeCode))
+        .appendButton("TPA Here"_trl(localeCode))
         .sendTo(player, [fn = std::move(callback)](Player& self, int index, ll::form::FormCancelReason) {
             if (index == -1) {
                 return;
@@ -39,7 +39,7 @@ void TpaGUI::sendChooseTpaPlayerMenu(Player& player, TpaRequest::Type type) {
 
     auto const localeCode = player.getLocaleCode();
 
-    auto fm = ll::form::SimpleForm{"Tpa - 发起传送请求"_trl(localeCode), "选择一个玩家"_trl(localeCode)};
+    auto fm = ll::form::SimpleForm{"Tpa - Gửi yêu cầu dịch chuyển"_trl(localeCode), "Chọn một người chơi"_trl(localeCode)};
 
     level->forEachPlayer([&fm, type](Player& target) {
         fm.appendButton(target.getRealName(), [&target, type](Player& self) {

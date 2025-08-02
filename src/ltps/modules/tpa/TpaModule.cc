@@ -11,11 +11,8 @@
 #include "ltps/utils/McUtils.h"
 #include <algorithm>
 
-
 namespace ltps::tpa {
-
 TpaModule::TpaModule() = default;
-
 std::vector<std::string> TpaModule::getDependencies() const { return {}; }
 
 bool TpaModule::isLoadable() const { return getConfig().modules.tpa.enable; }
@@ -51,26 +48,25 @@ bool TpaModule::enable() {
     mListeners.emplace_back(bus.emplaceListener<CreatingTpaRequestEvent>(
         [this](CreatingTpaRequestEvent& ev) {
             auto& sender = ev.getSender();
-
             auto localeCode = sender.getLocaleCode();
 
-            // 维度检查
+            // Kiểm tra chiều không gian
             if (std::find(
                     getConfig().modules.tpa.disallowedDimensions.begin(),
                     getConfig().modules.tpa.disallowedDimensions.end(),
                     sender.getDimensionId()
                 )
                 != getConfig().modules.tpa.disallowedDimensions.end()) {
-                mc_utils::sendText<mc_utils::Error>(sender, "此功能在当前维度不可用"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(sender, "Chức năng này không khả dụng trong chiều không gian hiện tại"_trl(localeCode));
                 ev.cancel();
                 return;
             }
 
-            // TPA 请求冷却
+            // Kiểm tra thời gian hồi chiêu TPA
             if (this->mCooldown.isCooldown(sender.getRealName())) {
                 mc_utils::sendText<mc_utils::Error>(
                     sender,
-                    "TPA 请求冷却中，剩余时间 {0}"_trl(
+                    "Yêu cầu TPA đang hồi chiêu, còn lại {0}"_trl(
                         localeCode,
                         this->mCooldown.getCooldownString(sender.getRealName())
                     )
@@ -80,15 +76,15 @@ bool TpaModule::enable() {
             }
             this->mCooldown.setCooldown(sender.getRealName(), getConfig().modules.tpa.cooldownTime);
 
-            // 费用检查
+            // Tính phí
             PriceCalculate cl(getConfig().modules.tpa.createRequestCalculate);
-            auto           clValue = cl.eval();
+            auto clValue = cl.eval();
             if (!clValue.has_value()) {
                 TeleportSystem::getInstance().getSelf().getLogger().error(
-                    "An exception occurred while calculating the TPA price, please check the configuration file.\n{}",
+                    "Đã xảy ra lỗi khi tính phí TPA, vui lòng kiểm tra cấu hình.\n{}",
                     clValue.error()
                 );
-                mc_utils::sendText<mc_utils::Error>(sender, "TPA 模块异常，请联系管理员"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(sender, "Module TPA gặp lỗi, vui lòng liên hệ quản trị viên"_trl(localeCode));
                 ev.cancel();
                 return;
             }
@@ -103,7 +99,7 @@ bool TpaModule::enable() {
             }
 
             if (!economy->reduce(sender, price)) {
-                mc_utils::sendText<mc_utils::Error>(sender, "扣除 TPA 费用失败，请联系管理员"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(sender, "Trừ phí TPA thất bại, vui lòng liên hệ quản trị viên"_trl(localeCode));
                 ev.cancel();
             }
         },
@@ -119,11 +115,11 @@ bool TpaModule::enable() {
 
             mc_utils::sendText(
                 *sender,
-                "已向 '{0}' 发起 '{1}' 请求"_trl(sender->getLocaleCode(), receiver->getRealName(), type)
+                "Đã gửi yêu cầu '{1}' tới '{0}'"_trl(sender->getLocaleCode(), receiver->getRealName(), type)
             );
             mc_utils::sendText(
                 *receiver,
-                "收到来自 '{0}' 的 '{1}' 请求"_trl(receiver->getLocaleCode(), sender->getRealName(), type)
+                "Bạn đã nhận được yêu cầu '{1}' từ '{0}'"_trl(receiver->getLocaleCode(), sender->getRealName(), type)
             );
         },
         ll::event::EventPriority::High
@@ -137,7 +133,7 @@ bool TpaModule::enable() {
 
             mc_utils::sendText(
                 *sender,
-                "'{0}' 接受了您的 '{1}' 请求。"_trl(
+                "'{0}' đã chấp nhận yêu cầu '{1}' của bạn."_trl(
                     sender->getLocaleCode(),
                     receiver->getRealName(),
                     TpaRequest::getTypeString(type)
@@ -145,7 +141,7 @@ bool TpaModule::enable() {
             );
             mc_utils::sendText(
                 *receiver,
-                "您接受了来自 '{0}' 的 '{1}' 请求。"_trl(
+                "Bạn đã chấp nhận yêu cầu '{1}' từ '{0}'."_trl(
                     receiver->getLocaleCode(),
                     sender->getRealName(),
                     TpaRequest::getTypeString(type)
@@ -163,7 +159,7 @@ bool TpaModule::enable() {
 
             mc_utils::sendText<mc_utils::Error>(
                 *sender,
-                "'{0}' 拒绝了您的 '{1}' 请求。"_trl(
+                "'{0}' đã từ chối yêu cầu '{1}' của bạn."_trl(
                     sender->getLocaleCode(),
                     receiver->getRealName(),
                     TpaRequest::getTypeString(type)
@@ -171,7 +167,7 @@ bool TpaModule::enable() {
             );
             mc_utils::sendText<mc_utils::Warn>(
                 *receiver,
-                "您拒绝了来自 '{0}' 的 '{1}' 请求。"_trl(
+                "Bạn đã từ chối yêu cầu '{1}' từ '{0}'."_trl(
                     receiver->getLocaleCode(),
                     sender->getRealName(),
                     TpaRequest::getTypeString(type)
@@ -188,7 +184,7 @@ bool TpaModule::enable() {
             auto const localeCode = receiver.getLocaleCode();
 
             if (receiver.isSleeping()) {
-                mc_utils::sendText<mc_utils::Error>(receiver, "你不能在睡觉时使用此命令"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(receiver, "Bạn không thể sử dụng lệnh này khi đang ngủ"_trl(localeCode));
                 return;
             }
 
@@ -197,15 +193,15 @@ bool TpaModule::enable() {
 
             switch (senders.size()) {
             case 0:
-                mc_utils::sendText<mc_utils::Error>(receiver, "您没有收到任何 TPA 请求"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(receiver, "Bạn chưa nhận được bất kỳ yêu cầu TPA nào"_trl(localeCode));
                 return;
             case 1: {
                 auto request = pool.getRequest(senders[0], receiver.getUuid());
                 if (request) {
                     isAccept ? request->accept() : request->deny();
                 } else {
-                    mc_utils::sendText<mc_utils::Error>(receiver, "TPA 请求不存在"_trl(localeCode));
-                    TeleportSystem::getInstance().getSelf().getLogger().error("An unexpected request is null pointer.");
+                    mc_utils::sendText<mc_utils::Error>(receiver, "Yêu cầu TPA không tồn tại"_trl(localeCode));
+                    TeleportSystem::getInstance().getSelf().getLogger().error("Yêu cầu TPA không hợp lệ (null pointer).");
                 }
                 return;
             }
@@ -213,13 +209,13 @@ bool TpaModule::enable() {
                 auto& infoDb = ll::service::PlayerInfo::getInstance();
 
                 ll::form::SimpleForm fm;
-                fm.setTitle("Tpa 请求列表 [{}]"_trl(localeCode, senders.size()));
-                fm.setContent("选择一个要 接受/拒绝 的 TPA 请求"_trl(localeCode));
+                fm.setTitle("Danh sách yêu cầu TPA [{}]"_trl(localeCode, senders.size()));
+                fm.setContent("Chọn một yêu cầu TPA để chấp nhận/từ chối"_trl(localeCode));
 
                 for (auto& sender : senders) {
                     auto info = infoDb.fromUuid(sender);
                     fm.appendButton(
-                        "发起者: {0}"_trl(localeCode, info.has_value() ? info->name : sender.asString()),
+                        "Người gửi: {0}"_trl(localeCode, info.has_value() ? info->name : sender.asString()),
                         [&pool, sender, isAccept](Player& self) {
                             if (auto request = pool.getRequest(self.getUuid(), sender)) {
                                 isAccept ? request->accept() : request->deny();
@@ -258,6 +254,5 @@ Cooldown& TpaModule::getCooldown() { return mCooldown; }
 
 TpaRequestPool&       TpaModule::getRequestPool() { return *mTpaRequestPool; }
 TpaRequestPool const& TpaModule::getRequestPool() const { return *mTpaRequestPool; }
-
 
 } // namespace ltps::tpa

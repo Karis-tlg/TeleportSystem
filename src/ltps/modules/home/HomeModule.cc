@@ -28,6 +28,7 @@ bool HomeModule::init() { return true; }
 bool HomeModule::enable() {
     auto& bus = ll::event::EventBus::getInstance();
 
+    // Thêm nhà mới
     mListeners.emplace_back(bus.emplaceListener<PlayerRequestAddHomeEvent>(
         [this](PlayerRequestAddHomeEvent& ev) {
             auto&           player     = ev.getPlayer();
@@ -51,7 +52,7 @@ bool HomeModule::enable() {
 
             auto res = storage->addHome(realName, home);
             if (!res) {
-                mc_utils::sendText<mc_utils::Error>(player, "添加家园失败"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(player, "Thêm nhà thất bại"_trl(localeCode));
                 TeleportSystem::getInstance().getSelf().getLogger().error(
                     "[HomeModule]: Add home failed! player: {}, homeName: {}, error: {}",
                     realName,
@@ -62,7 +63,7 @@ bool HomeModule::enable() {
                 return;
             }
 
-            mc_utils::sendText(player, "添加家园成功"_trl(localeCode));
+            mc_utils::sendText(player, "Thêm nhà thành công"_trl(localeCode));
 
             auto added = HomeAddedEvent(player, home);
             bus.publish(added);
@@ -72,6 +73,7 @@ bool HomeModule::enable() {
         ll::event::EventPriority::High
     ));
 
+    // Kiểm tra điều kiện trước khi thêm nhà
     mListeners.emplace_back(bus.emplaceListener<HomeAddingEvent>(
         [this](HomeAddingEvent& ev) {
             auto storage = getStorage();
@@ -85,7 +87,7 @@ bool HomeModule::enable() {
 
             auto const& dimid = ev.getHome().dimid;
             if (getConfig().modules.home.disallowedDimensions.contains(dimid)) {
-                mc_utils::sendText<mc_utils::Error>(player, "该维度无法创建家园"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(player, "Không thể tạo nhà ở thế giới này"_trl(localeCode));
                 ev.cancel();
                 return;
             }
@@ -94,7 +96,7 @@ bool HomeModule::enable() {
             if (!string_utils::isLengthValid(homeName, getConfig().modules.home.nameLength)) {
                 mc_utils::sendText<mc_utils::Error>(
                     player,
-                    "家园名称长度不符合要求({}/{})"_trl(
+                    "Độ dài tên nhà không hợp lệ ({}/{})"_trl(
                         localeCode,
                         string_utils::length(homeName),
                         getConfig().modules.home.nameLength
@@ -105,7 +107,7 @@ bool HomeModule::enable() {
             }
 
             if (storage->hasHome(realName, homeName)) {
-                mc_utils::sendText<mc_utils::Error>(player, "家园名称重复，请使用其它名称"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(player, "Tên nhà bị trùng, hãy dùng tên khác"_trl(localeCode));
                 ev.cancel();
                 return;
             }
@@ -123,7 +125,7 @@ bool HomeModule::enable() {
             }
 
             if (count > getConfig().modules.home.maxHome && !unLimited) {
-                mc_utils::sendText<mc_utils::Error>(player, "家园数量超过上限，无法创建"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(player, "Số lượng nhà đã vượt quá giới hạn, không thể tạo thêm"_trl(localeCode));
                 ev.cancel();
                 return;
             }
@@ -133,7 +135,7 @@ bool HomeModule::enable() {
 
             auto price = cl.eval();
             if (!price.has_value()) {
-                mc_utils::sendText<mc_utils::Error>(player, "计算价格失败"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(player, "Tính giá thất bại"_trl(localeCode));
                 TeleportSystem::getInstance().getSelf().getLogger().error(
                     "[HomeModule]: Calculate price failed! player: {}, homeName: {}, count: {}, error: {}",
                     realName,
@@ -147,7 +149,7 @@ bool HomeModule::enable() {
 
             auto& economy = EconomySystemManager::getInstance();
             if (!economy->reduce(player, static_cast<llong>(price.value()))) {
-                // mc_utils::sendText<mc_utils::Error>(player, "经济不足，无法创建"_trl(localeCode));
+                // mc_utils::sendText<mc_utils::Error>(player, "Không đủ tiền, không thể tạo nhà"_trl(localeCode));
                 economy->sendNotEnoughMoneyMessage(player, static_cast<llong>(price.value()), localeCode);
                 ev.cancel();
                 return;
@@ -156,6 +158,7 @@ bool HomeModule::enable() {
         ll::event::EventPriority::High
     ));
 
+    // Xóa nhà
     mListeners.emplace_back(bus.emplaceListener<PlayerRequestRemoveHomeEvent>(
         [this](PlayerRequestRemoveHomeEvent& ev) {
             auto& bus = ll::event::EventBus::getInstance();
@@ -178,7 +181,7 @@ bool HomeModule::enable() {
 
             auto res = storage->removeHome(player.getRealName(), name);
             if (!res) {
-                mc_utils::sendText<mc_utils::Error>(player, "删除家园失败"_trl(player.getLocaleCode()));
+                mc_utils::sendText<mc_utils::Error>(player, "Xóa nhà thất bại"_trl(player.getLocaleCode()));
                 TeleportSystem::getInstance().getSelf().getLogger().error(
                     "[HomeModule]: Remove home failed! player: {}, homeName: {}, error: {}",
                     player.getRealName(),
@@ -189,7 +192,7 @@ bool HomeModule::enable() {
                 ev.cancel();
                 return;
             }
-            mc_utils::sendText(player, "删除家园 {} 成功!"_trl(player.getLocaleCode(), name));
+            mc_utils::sendText(player, "Xóa nhà {} thành công!"_trl(player.getLocaleCode(), name));
 
             auto removed = HomeRemovedEvent(player, name);
             bus.publish(removed);
@@ -199,10 +202,10 @@ bool HomeModule::enable() {
         ll::event::EventPriority::High
     ));
 
+    // Dịch chuyển về nhà
     mListeners.emplace_back(bus.emplaceListener<PlayerRequestGoHomeEvent>(
         [this](PlayerRequestGoHomeEvent& ev) {
             auto& bus = ll::event::EventBus::getInstance();
-
 
             auto& player     = ev.getPlayer();
             auto  realName   = player.getRealName();
@@ -216,7 +219,7 @@ bool HomeModule::enable() {
 
             auto home = storage->getHome(realName, name);
             if (!home) {
-                mc_utils::sendText<mc_utils::Error>(player, "家园不存在"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(player, "Nhà không tồn tại"_trl(localeCode));
                 ev.cancel();
                 return;
             }
@@ -239,6 +242,7 @@ bool HomeModule::enable() {
         ll::event::EventPriority::High
     ));
 
+    // Kiểm tra cooldown & giá khi dịch chuyển về nhà
     mListeners.emplace_back(bus.emplaceListener<HomeTeleportingEvent>(
         [this](HomeTeleportingEvent& ev) {
             auto& player     = ev.getPlayer();
@@ -250,7 +254,7 @@ bool HomeModule::enable() {
             if (cooldown.isCooldown(realName)) {
                 mc_utils::sendText(
                     player,
-                    "传送冷却中, 请稍后重试，冷却时间: {}"_trl(localeCode, cooldown.getCooldownString(realName))
+                    "Đang trong thời gian hồi chiêu, vui lòng thử lại sau, còn lại: {}"_trl(localeCode, cooldown.getCooldownString(realName))
                 );
                 ev.cancel();
                 return;
@@ -261,7 +265,7 @@ bool HomeModule::enable() {
             auto price = cl.eval();
 
             if (!price) {
-                mc_utils::sendText<mc_utils::Error>(player, "计算价格失败"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(player, "Tính giá thất bại"_trl(localeCode));
                 TeleportSystem::getInstance().getSelf().getLogger().error(
                     "[HomeModule]: Calculate price failed! player: {}, homeName: {}, error: {}",
                     realName,
@@ -284,6 +288,7 @@ bool HomeModule::enable() {
         ll::event::EventPriority::High
     ));
 
+    // Sửa nhà
     mListeners.emplace_back(bus.emplaceListener<PlayerRequestEditHomeEvent>(
         [this](PlayerRequestEditHomeEvent& ev) {
             auto& bus        = ll::event::EventBus::getInstance();
@@ -299,7 +304,7 @@ bool HomeModule::enable() {
             auto storage = this->getStorage();
             auto home    = storage->getHome(realName, name);
             if (!home) {
-                mc_utils::sendText<mc_utils::Error>(player, "家园 {} 不存在，本次操作无法继续"_trl(localeCode, name));
+                mc_utils::sendText<mc_utils::Error>(player, "Nhà {} không tồn tại, không thể thực hiện thao tác"_trl(localeCode, name));
                 ev.cancel();
                 return;
             }
@@ -319,9 +324,9 @@ bool HomeModule::enable() {
             }
 
             if (auto res = storage->updateHome(realName, name, *home)) {
-                mc_utils::sendText(player, "家园 {} 数据已更新"_trl(localeCode, name));
+                mc_utils::sendText(player, "Nhà {} đã được cập nhật"_trl(localeCode, name));
             } else {
-                mc_utils::sendText(player, "更改家园数据失败: {}"_trl(localeCode, res.error()));
+                mc_utils::sendText(player, "Cập nhật nhà thất bại: {}"_trl(localeCode, res.error()));
                 ev.cancel();
                 return;
             }
@@ -342,7 +347,7 @@ bool HomeModule::enable() {
                 if (!string_utils::isLengthValid(*newName, getConfig().modules.home.nameLength)) {
                     mc_utils::sendText<mc_utils::Error>(
                         player,
-                        "家园名称长度不符合要求({}/{})"_trl(
+                        "Độ dài tên nhà không hợp lệ ({}/{})"_trl(
                             localeCode,
                             string_utils::length(*newName),
                             getConfig().modules.home.nameLength
@@ -355,8 +360,7 @@ bool HomeModule::enable() {
         ll::event::EventPriority::High
     ));
 
-
-    // Admin
+    // ADMIN
     mListeners.emplace_back(bus.emplaceListener<AdminRequestGoPlayerHomeEvent>(
         [this](AdminRequestGoPlayerHomeEvent& ev) {
             auto& bus    = ll::event::EventBus::getInstance();
@@ -400,11 +404,11 @@ bool HomeModule::enable() {
 
             auto storage = this->getStorage();
             if (auto res = storage->addHome(target, home)) {
-                mc_utils::sendText(player, "为玩家 {} 创建家园 {} 成功"_trl(localeCode, target, name));
+                mc_utils::sendText(player, "Tạo nhà {} cho người chơi {} thành công"_trl(localeCode, name, target));
             } else {
                 mc_utils::sendText<mc_utils::Error>(
                     player,
-                    "为玩家 {} 创建家园 {} 失败: {}"_trl(localeCode, target, name, res.error())
+                    "Tạo nhà {} cho người chơi {} thất bại: {}"_trl(localeCode, name, target, res.error())
                 );
             }
         },
@@ -419,7 +423,7 @@ bool HomeModule::enable() {
             auto  dimid      = ev.getDimid();
 
             if (getConfig().modules.home.disallowedDimensions.contains(dimid)) {
-                mc_utils::sendText<mc_utils::Error>(player, "该维度无法创建家园"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(player, "Không thể tạo nhà ở thế giới này"_trl(localeCode));
                 ev.cancel();
                 return;
             }
@@ -427,7 +431,7 @@ bool HomeModule::enable() {
             if (!string_utils::isLengthValid(name, getConfig().modules.home.nameLength)) {
                 mc_utils::sendText<mc_utils::Error>(
                     player,
-                    "家园名称长度不符合要求({}/{})"_trl(
+                    "Độ dài tên nhà không hợp lệ ({}/{})"_trl(
                         localeCode,
                         string_utils::length(name),
                         getConfig().modules.home.nameLength
@@ -438,7 +442,7 @@ bool HomeModule::enable() {
             }
 
             if (getStorage()->hasHome(target, name)) {
-                mc_utils::sendText<mc_utils::Error>(player, "家园名称重复，请使用其它名称"_trl(localeCode));
+                mc_utils::sendText<mc_utils::Error>(player, "Tên nhà bị trùng, hãy dùng tên khác"_trl(localeCode));
                 ev.cancel();
                 return;
             }
@@ -463,11 +467,11 @@ bool HomeModule::enable() {
 
             auto storage = this->getStorage();
             if (auto res = storage->updateHome(target, home.name, newHome)) {
-                mc_utils::sendText(player, "修改玩家 {} 的家园 {} 成功"_trl(player.getLocaleCode(), target, home.name));
+                mc_utils::sendText(player, "Đã sửa nhà {} của người chơi {} thành công"_trl(player.getLocaleCode(), home.name, target));
             } else {
                 mc_utils::sendText<mc_utils::Error>(
                     player,
-                    "修改玩家 {} 的家园 {} 失败: {}"_trl(player.getLocaleCode(), target, home.name, res.error())
+                    "Sửa nhà {} của người chơi {} thất bại: {}"_trl(player.getLocaleCode(), home.name, target, res.error())
                 );
             }
 
@@ -485,7 +489,7 @@ bool HomeModule::enable() {
             if (!string_utils::isLengthValid(newName, getConfig().modules.home.nameLength)) {
                 mc_utils::sendText<mc_utils::Error>(
                     player,
-                    "家园名称长度不符合要求({}/{})"_trl(
+                    "Độ dài tên nhà không hợp lệ ({}/{})"_trl(
                         localeCode,
                         string_utils::length(newName),
                         getConfig().modules.home.nameLength
@@ -513,11 +517,11 @@ bool HomeModule::enable() {
 
             auto storage = this->getStorage();
             if (auto res = storage->removeHome(target, home.name)) {
-                mc_utils::sendText(player, "删除玩家 {} 的家园 {} 成功"_trl(player.getLocaleCode(), target, home.name));
+                mc_utils::sendText(player, "Xóa nhà {} của người chơi {} thành công"_trl(player.getLocaleCode(), home.name, target));
             } else {
                 mc_utils::sendText<mc_utils::Error>(
                     player,
-                    "删除玩家 {} 的家园 {} 失败: {}"_trl(player.getLocaleCode(), target, home.name, res.error())
+                    "Xóa nhà {} của người chơi {} thất bại: {}"_trl(player.getLocaleCode(), home.name, target, res.error())
                 );
                 return;
             }
