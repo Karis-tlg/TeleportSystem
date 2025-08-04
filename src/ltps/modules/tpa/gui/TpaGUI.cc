@@ -8,9 +8,7 @@
 #include "mc/world/level/Level.h"
 #include <memory>
 
-
 namespace ltps::tpa {
-
 
 void TpaGUI::sendMainMenu(Player& player) {
     sendChooseTpaTypeMenu(player, [](Player& self, TpaRequest::Type type) { sendChooseTpaPlayerMenu(self, type); });
@@ -18,7 +16,6 @@ void TpaGUI::sendMainMenu(Player& player) {
 
 void TpaGUI::sendChooseTpaTypeMenu(Player& player, ChooseTpaTypeCallback callback) {
     auto const localeCode = player.getLocaleCode();
-
     ll::form::SimpleForm{"Menu TPA"_trl(localeCode), "Chọn chế độ TPA?"_trl(localeCode)}
         .appendButton("TPA"_trl(localeCode))
         .appendButton("TPA Here"_trl(localeCode))
@@ -26,25 +23,22 @@ void TpaGUI::sendChooseTpaTypeMenu(Player& player, ChooseTpaTypeCallback callbac
             if (index == -1) {
                 return;
             }
-
             fn(self, static_cast<TpaRequest::Type>(index));
         });
 }
 
 void TpaGUI::sendChooseTpaPlayerMenu(Player& player, TpaRequest::Type type) {
     auto level = ll::service::getLevel();
-    if (!level) {
-        return;
-    }
-
+    if (!level) { return; }
     auto const localeCode = player.getLocaleCode();
+    auto fm = ll::form::SimpleForm{
+        "Tpa - Gửi yêu cầu dịch chuyển"_trl(localeCode),
+        "Chọn một người chơi"_trl(localeCode)
+    };
 
-    auto fm = ll::form::SimpleForm{"Tpa - Gửi yêu cầu dịch chuyển"_trl(localeCode), "Chọn một người chơi"_trl(localeCode)};
-
-    level->forEachPlayer([&fm, type](Player& target) {
-        if (&target == &player) return true;
+    level->forEachPlayer([&fm, &player, type](Player& target) {
+        if (&target == &player) return true; // Loại bản thân ra
         fm.appendButton(target.getRealName(), [&target, type](Player& self) {
-            // clang-format off
             ll::event::EventBus::getInstance().publish(
                 CreateTpaRequestEvent{
                     self,
@@ -57,13 +51,9 @@ void TpaGUI::sendChooseTpaPlayerMenu(Player& player, TpaRequest::Type type) {
                     }
                 }
             );
-            // clang-format on
         });
         return true;
     });
-
     fm.sendTo(player);
 }
-
-
 } // namespace ltps::tpa
