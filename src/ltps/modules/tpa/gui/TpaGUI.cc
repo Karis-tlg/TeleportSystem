@@ -42,6 +42,7 @@ void TpaGUI::sendChooseTpaPlayerMenu(Player& player, TpaRequest::Type type) {
     auto fm = ll::form::SimpleForm{"Tpa - Gửi yêu cầu dịch chuyển"_trl(localeCode), "Chọn một người chơi"_trl(localeCode)};
 
     level->forEachPlayer([&fm, type](Player& target) {
+        if (&target == &player) return true;
         fm.appendButton(target.getRealName(), [&target, type](Player& self) {
             // clang-format off
             ll::event::EventBus::getInstance().publish(
